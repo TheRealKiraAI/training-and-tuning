@@ -7,6 +7,7 @@ const MOBILE_NET_INPUT_WIDTH = 224;
 const MOBILE_NET_INPUT_HEIGHT = 224;
 const STOP_DATA_GATHER = -1;
 const CLASS_NAMES = [];
+
 ENABLE_CAM_BUTTON.addEventListener("click", enableCam);
 TRAIN_BUTTON.addEventListener("click", trainAndPredict);
 RESET_BUTTON.addEventListener("click", reset);
@@ -19,17 +20,13 @@ let trainingDataOutputs = [];
 let examplesCount = [];
 let predict = false;
 
-const statusElement = document.getElementById("status");
-if (statusElement) {
-  statusElement.textContent = "Loaded TensorFlow.js - version: " + tf.version.tfjs;
-}
-
 /**
  * Loads the MobileNet model and warms it up so ready for use.
  **/
 async function loadMobileNetFeatureModel() {
   const URL =
     "https://tfhub.dev/google/tfjs-model/imagenet/mobilenet_v3_small_100_224/feature_vector/5/default/1";
+
   mobilenet = await tf.loadGraphModel(URL, { fromTFHub: true });
   STATUS.innerText = "MobileNet v3 loaded successfully!";
 
@@ -42,6 +39,7 @@ async function loadMobileNetFeatureModel() {
   });
 }
 
+// Call the function immediately to start loading.
 loadMobileNetFeatureModel();
 
 function enableCam() {
