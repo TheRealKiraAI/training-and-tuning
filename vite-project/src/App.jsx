@@ -1,34 +1,61 @@
-import React, { useState } from "react";
-import * as tf from "@tensorflow/tfjs";
-import classifyMoonPhase from "./moonClassifier";
+import React, { useEffect, useState } from "react";
+// import * as tf from "@tensorflow/tfjs";
+// import classifyMoonPhase from "./moonClassifier";
+
+import * as mobilenet from "@tensorflow-models/mobilenet";
+import "@tensorflow/tfjs";
 
 const App = () => {
+  const [model, setModel] = useState(null);
   const [image, setImage] = useState(null);
-  const [result, setResult] = useState("");
+  const [prediction, setPrediction] = useState("");
+  const [text, setText] = useState("Awaiting MobileNet Model...");
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => setImage(reader.result);
-      reader.readAsDataURL(file);
-    }
+  useEffect(() => {
+    const loadModel = async () => {
+      const loadedModel = await mobilenet.load();
+      setModel(loadedModel);
+      setText("MobileNet model loaded successfully!");
+      console.log("MobileNet model loaded successfully!");
+    };
+    loadModel();
+  }, []);
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    setImage(URL.createObjectURL(file));
   };
 
-  const handleClassify = async () => {
-    if (image) {
-      const prediction = await classifyMoonPhase(image);
-      setResult(prediction);
-    }
+  const classifyImage = async () => {
+    if (!model || !image) return;
+
+    const imgElement = document.getElementById("uploadedImage");
+    const predictions = await model.classify(imgElement);
+
+    const topPrediction = predictions[0];
+    setPrediction(
+      `Prediction: ${topPrediction.className}, Probability: ${topPrediction.probability.toFixed(2)}`
+    );
   };
 
   return (
     <div>
-      <h1>Moon Phase Classifier</h1>
+      <h1>Image Classifier with MobileNet</h1>
       <input type="file" onChange={handleImageUpload} />
-      <button onClick={handleClassify}>Classify</button>
-      {image && <img src={image} alt="Uploaded" style={{ width: "200px" }} />}
-      {result && <h2>Prediction: {result}</h2>}
+
+      {text}
+
+      {image && (
+        <img
+          id="uploadedImage"
+          src={image}
+          alt="Uploaded"
+          style={{ display: "block", maxWidth: "300px", margin: "20px 0" }}
+          onLoad={classifyImage}
+        />
+      )}
+
+      {prediction && <h2 id="result">{prediction}</h2>}
     </div>
   );
 };

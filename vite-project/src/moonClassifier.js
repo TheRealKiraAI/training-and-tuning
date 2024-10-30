@@ -9,29 +9,29 @@ const loadModel = async () => {
   return model;
 };
 
-const classifyMoonPhase = async (imageData) => {
-  await loadModel();
+// const classifyMoonPhase = async (imageData) => {
+//   await loadModel();
 
-  const img = new Image();
-  img.src = imageData;
-  await img.decode();
+//   const img = new Image();
+//   img.src = imageData;
+//   await img.decode();
 
-  const tensor = tf.browser
-    .fromPixels(img)
-    .resizeNearestNeighbor([224, 224]) // Resize as per your model’s requirements
-    .toFloat()
-    .expandDims();
+//   const tensor = tf.browser
+//     .fromPixels(img)
+//     .resizeNearestNeighbor([224, 224]) // Resize as per your model’s requirements
+//     .toFloat()
+//     .expandDims();
 
-  const predictions = model.predict(tensor);
-  const moonPhase = predictions.argMax(-1).dataSync()[0];
+//   const predictions = model.predict(tensor);
+//   const moonPhase = predictions.argMax(-1).dataSync()[0];
 
-  return moonPhase === 0
-    ? "New Moon"
-    : moonPhase === 1
-    ? "First Quarter"
-    : moonPhase === 2
-    ? "Full Moon"
-    : "Last Quarter"; // Example mapping
-};
+//   return moonPhase === 0
+//     ? "New Moon"
+//     : moonPhase === 1
+//     ? "First Quarter"
+//     : moonPhase === 2
+//     ? "Full Moon"
+//     : "Last Quarter"; // Example mapping
+// };
 
 export default classifyMoonPhase;
