@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-// import * as tf from "@tensorflow/tfjs";
-// import classifyMoonPhase from "./moonClassifier";
+import * as tf from "@tensorflow/tfjs";
+import classifyMoonPhase from "./moonClassifier";
+import trainModel from "./trainModel";
 
 import * as mobilenet from "@tensorflow-models/mobilenet";
 import "@tensorflow/tfjs";
@@ -9,6 +10,8 @@ const App = () => {
   const [model, setModel] = useState(null);
   const [image, setImage] = useState(null);
   const [prediction, setPrediction] = useState("");
+  const [result, setResult] = useState("");
+
   const [text, setText] = useState("Awaiting MobileNet Model...");
 
   useEffect(() => {
@@ -26,6 +29,14 @@ const App = () => {
     setImage(URL.createObjectURL(file));
   };
 
+  // const classifyImage = async () => {
+  //   if (image) {
+  //     const prediction = await classifyMoon(image);
+  //     console.log("classifying...");
+  //     setResult(prediction);
+  //   }
+  // };
+
   const classifyImage = async () => {
     if (!model || !image) return;
 
@@ -34,7 +45,9 @@ const App = () => {
 
     const topPrediction = predictions[0];
     setPrediction(
-      `Prediction: ${topPrediction.className}, Probability: ${topPrediction.probability.toFixed(2)}`
+      `Prediction: ${
+        topPrediction.className
+      }, Probability: ${topPrediction.probability.toFixed(2)}`
     );
   };
 
@@ -55,7 +68,8 @@ const App = () => {
         />
       )}
 
-      {prediction && <h2 id="result">{prediction}</h2>}
+      {prediction && <h2 id="result">Prediction: {prediction}</h2>}
+      <button onClick={trainModel}>Train Model</button>
     </div>
   );
 };
