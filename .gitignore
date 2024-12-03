@@ -1,6 +1,7 @@
 sample-images/
 fashion-mnist/
 fashion-mnist-tfjs/
+fashion-mnist-tfjs-transfer/
 
 node_modules/
 
