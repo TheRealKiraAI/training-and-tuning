@@ -48,7 +48,7 @@ const loadData = function (dataUrl, batches = batchSize) {
       xs: tf.tensor(xs, [imageWidth, imageHeight, imageChannels]),
       ys: tf.tensor1d(
         zeros.map((z, i) => {
-          return i === ys ? 1 : 0;
+          return i === ys - numOfClasses ? 1 : 0; // changing data because same csv, not normally
         })
       ),
     };
@@ -58,56 +58,30 @@ const loadData = function (dataUrl, batches = batchSize) {
   return tf.data
     .csv(dataUrl, { columnConfigs: { label: { isLabel: true } } })
     .map(normalize)
-    .filter((f) => f.ys < numOfClasses)
+    .filter((f) => f.ys >= labels.length - numOfClasses)
     .map(transform)
     .batch(batchSize); // batches it all together
 };
 
 // Define the model architecture
-const buildModel = function () {
-  const model = tf.sequential(); // creates model
+const buildModel = function (baseModel) {
+  // remove last layer of base model. This is softmax classification layer for classifying Fashion-MNIST. Leaves us with Flatten layer as new final layer.
+  baseModel.layers.pop();
 
-  // add the model layers
-  // consists of 2 layers
-  // can add more layers or activation layers
-  // linear order
-  model.add(
-    tf.layers.conv2d({
-      inputShape: [imageWidth, imageHeight, imageChannels],
-      filters: 32, // Increased filters
-      kernelSize: 3,
-      padding: "same",
-      activation: "relu",
-    })
-  );
-  model.add(tf.layers.batchNormalization());
-  model.add(tf.layers.maxPooling2d({ poolSize: 2, strides: 2 }));
-  model.add(tf.layers.dropout({ rate: 0.25 })); // Dropout layer
+  // freeze weights in base model layers so they don't change when we train new model
+  for (const layer of baseModel.layers) {
+    layer.trainable = false;
+  }
 
-  model.add(
-    tf.layers.conv2d({
-      filters: 64, // Increased filters
-      kernelSize: 3,
-      padding: "same",
-      activation: "relu",
-    })
-  );
-  model.add(tf.layers.batchNormalization());
-  model.add(tf.layers.maxPooling2d({ poolSize: 2, strides: 2 }));
-  model.add(tf.layers.dropout({ rate: 0.25 })); // Dropout layer
-
-  model.add(tf.layers.flatten());
-  model.add(
-    tf.layers.dense({
-      units: 128, // Added dense layer
-      activation: "relu",
-    })
-  );
-  model.add(tf.layers.dropout({ rate: 0.5 })); // Dropout layer
+  // create new sequential model starting from the layers of previous model
+  const model = tf.sequential({
+    layers: baseModel.layers,
+  });
   model.add(
     tf.layers.dense({
       units: numOfClasses,
-      activation: "softmax",
+      activation: "softmax", // classification model; trainable layers
+      name: "topSoftMax",
     })
   );
 
@@ -159,10 +133,14 @@ const run = async function () {
   // arr[0].ys.print();
   // arr[0].xs.print();
 
-  // Full path to the directory to save the model in
-  const saveModelPath = "file://./fashion-mnist-tfjs";
+  const amount = Math.floor(3000 / batchSize);
+  const trainDataSubset = trainData.take(amount); // 10% of data
 
-  const model = buildModel();
+  const baseModelUrl = "file://./fashion-mnist-tfjs/model.json";
+  const saveModelPath = "file://./fashion-mnist-tfjs-transfer";
+
+  const baseModel = await tf.loadLayersModel(baseModelUrl);
+  const model = buildModel(baseModel);
   model.summary();
 
   const info = await trainModel(model, trainData);

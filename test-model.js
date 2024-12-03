@@ -2,6 +2,7 @@ import tf from "@tensorflow/tfjs-node";
 import sharp from "sharp";
 
 // mapping of Fashion-MNIST labels
+// comment out first 5 classes to test transfer model
 export const labels = [
   "T-shirt/top",
   "Trouser",
@@ -29,6 +30,10 @@ export const toPixelData = async function (imgPath) {
 
   const { data, info } = imageBuffer;
 
+  if (info.channels !== 1) {
+    throw new Error("Image must be grayscale with 1 channel");
+  }
+
   for (let i = 0; i < data.length; i++) {
     pixeldata.push(data[i] / 255);
   }
@@ -38,11 +43,7 @@ export const toPixelData = async function (imgPath) {
 
 export const runPrediction = function (model, imagepath) {
   return toPixelData(imagepath).then((pixeldata) => {
-    const imageTensor = tf.tensor(pixeldata, [
-      imageWidth,
-      imageHeight,
-      imageChannels,
-    ]);
+    const imageTensor = tf.tensor(pixeldata, [imageWidth, imageHeight, imageChannels]);
     const inputTensor = imageTensor.expandDims();
     const prediction = model.predict(inputTensor);
     const scores = prediction.arraySync()[0];
@@ -72,7 +73,7 @@ const run = async function () {
     // e.g., /path/to/image.jpg
     const imgPath = process.argv[2];
 
-    const modelUrl = "file://./fashion-mnist-tfjs/model.json";
+    const modelUrl = "file://./fashion-mnist-tfjs/model.json"; // change this for different model tests
 
     console.log("Loading model...");
     const model = await tf.loadLayersModel(modelUrl);
