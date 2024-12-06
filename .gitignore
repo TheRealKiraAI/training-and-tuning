@@ -2,7 +2,9 @@ sample-images/
 fashion-mnist/
 fashion-mnist-tfjs/
 fashion-mnist-tfjs-transfer/
+moons/
 
+env/
 node_modules/
 
 .DS_Store
