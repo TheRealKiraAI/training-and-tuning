@@ -1,0 +1,85 @@
+import tf from "@tensorflow/tfjs-node";
+import sharp from "sharp";
+
+// comment out first 5 classes to test transfer model
+export const labels = [
+  "First Quarter Moon",
+  "Full Moon",
+  "New Moon",
+  "Third Quarter Moon",
+  "Waning Gibbous Moon",
+  "Wanning Cresent Moon",
+  "Waxing Cresent Moon",
+  "Waxing Gibbous Moon",
+];
+
+const imageWidth = 640;
+const imageHeight = 640;
+const imageChannels = 1;
+
+export const toPixelData = async function (imgPath) {
+  const pixeldata = [];
+  const imageBuffer = await sharp(imgPath)
+    .resize(imageWidth, imageHeight)
+    .greyscale()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const { data, info } = imageBuffer;
+
+  if (info.channels !== 1) {
+    throw new Error("Image must be grayscale with 1 channel");
+  }
+
+  for (let i = 0; i < data.length; i++) {
+    pixeldata.push(data[i] / 255);
+  }
+
+  return pixeldata;
+};
+
+export const runPrediction = function (model, imagepath) {
+  return toPixelData(imagepath).then((pixeldata) => {
+    const imageTensor = tf.tensor(pixeldata, [imageWidth, imageHeight, imageChannels]);
+    const inputTensor = imageTensor.expandDims();
+    const prediction = model.predict(inputTensor);
+    const scores = prediction.arraySync()[0];
+
+    const maxScore = prediction.max().arraySync();
+    const maxScoreIndex = scores.indexOf(maxScore);
+
+    const labelScores = {};
+
+    scores.forEach((s, i) => {
+      labelScores[labels[i]] = parseFloat(s.toFixed(4));
+    });
+
+    return {
+      prediction: `${labels[maxScoreIndex]} (${parseInt(maxScore * 100)}%)`,
+      scores: labelScores,
+    };
+  });
+};
+
+// run
+const run = async function () {
+  if (process.argv.length < 3) {
+    console.log("please pass an image to process. ex:");
+    console.log("  node test-model.js /path/to/image.jpg");
+  } else {
+    // e.g., /path/to/image.jpg
+    const imgPath = process.argv[2];
+
+    const modelUrl = "file://./moon-phases/model.json"; // change this for different model tests
+
+    console.log("Loading model...");
+    const model = await tf.loadLayersModel(modelUrl);
+    model.summary();
+
+    console.log("Running prediction...");
+    const prediction = await runPrediction(model, imgPath);
+    console.log(prediction);
+  }
+};
+
+run();
