@@ -40,24 +40,44 @@ def parse_json_annotation(json_path):
 
     return annotations
 
+def parse_images(json_path):
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+    
+    images = data['images']
+
+    for image in images:
+        id = image['id']
+        filename = image['file_name']
+        width = image['width']
+        height = image['height']
+
+        # DEBUG
+        print(f"Processing category: {filename}, WIDTH: {width}, HEIGHT: {height}")
+
+    return images
+    
+
+
 def main():
-    # Directory containing JSON annotations
+    # directory containing JSON annotations
     annotation_dir = 'moons/json/train/'
     
-    # List to store all parsed annotations
     annotations = []
+    images = []
     
-    # Parse JSON annotations
+    # parse JSON annotations and images
     for json_file in os.listdir(annotation_dir):
         if json_file.endswith('.json'):
             json_path = os.path.join(annotation_dir, json_file)
             annotations.extend(parse_json_annotation(json_path))
+            images.extend(parse_images(json_path))
     
     # Prepare data
     # X = []
     # y = []
     # for ann in annotations:
-    #     img_path = os.path.join(annotation_dir, ann['filename'])
+    #     img_path = os.path.join(annotation_dir, ann['file_name'])
     #     img = Image.open(img_path)
     #     img_array = np.array(img.resize((224, 224)))
     #     img_array = img_array / 255.0  # Normalize pixel values
