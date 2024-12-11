@@ -2,7 +2,8 @@ sample-images/
 fashion-mnist/
 fashion-mnist-tfjs/
 fashion-mnist-tfjs-transfer/
-moons/
+moon-phases/
+tensorflow-moons/
 
 env/
 node_modules/
